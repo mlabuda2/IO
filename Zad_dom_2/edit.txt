@@ -1,0 +1,27 @@
+if ( PhoneService == 'No' & !MultipleLines=="No phone service") {
+    PhoneService <- NA
+}
+
+if ( InternetService == 'No' & !OnlineSecurity=="No internet service") {
+    InternetService <- NA
+}
+
+if ( InternetService == 'No' & !OnlineBackup=="No internet service") {
+    InternetService <- NA
+}
+
+if ( InternetService == 'No' & !DeviceProtection=="No internet service") {
+    InternetService <- NA
+}
+
+if ( InternetService == 'No' & !TechSupport=="No internet service") {
+    InternetService <- NA
+}
+
+if ( InternetService == 'No' & !StreamingTV=="No internet service") {
+    InternetService <- NA
+}
+
+if ( InternetService == 'No' & !StreamingMovies=="No internet service") {
+    InternetService <- NA
+}

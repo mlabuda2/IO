@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1546697652117.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "4231890293",
+    "id" : "749A8A3F",
+    "lastKnownWriteTime" : 1546697660,
+    "last_content_update" : 1546697660762,
+    "path" : "~/IO/dom3/model.r",
+    "project_path" : "model.r",
+    "properties" : {
+        "cursorPosition" : "6,0",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

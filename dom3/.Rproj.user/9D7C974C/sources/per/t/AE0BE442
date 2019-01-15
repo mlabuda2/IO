@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1547389400325.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2508720115",
+    "id" : "AE0BE442",
+    "lastKnownWriteTime" : 1547389344,
+    "last_content_update" : 1547389344,
+    "path" : "~/IO/dom3/DocumentTermMatrix.csv",
+    "project_path" : "DocumentTermMatrix.csv",
+    "properties" : {
+        "cursorPosition" : "0,22881",
+        "scrollLine" : "7"
+    },
+    "relative_order" : 4,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "text"
+}
