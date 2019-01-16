@@ -1,0 +1,248 @@
+﻿SPRAWOZDANIE                                                 Mateusz Labuda, 243689
+BAZA TELCO CUSTOMER CHURN
+Telco Churn, https://www.kaggle.com/blastchar/telco-customer-churn, (średnie)
+
+
+Zad 1. Wstęp i objaśnienie bazy
+Baza przedstawia dane o klientach firmy telekomunikacyjnej. Najważniejsza jest kolumna “Churn”, która mówi czy osoba dalej jest klientem firmy czy zrezygnowała. 
+Mówiąc najprościej, customer churn(rezygnacja klienta) ma miejsce, gdy klienci lub subskrybenci przestają robić interesy z firmą lub usługą. Właśnie ta kolumna została wybrana przeze mnie jako KLASA (TAK/NIE). Pozostałe kolumny tabeli to:
+-customerID - id
+-gender - płeć
+-SeniorCitizen - czy emeryt
+-Partner - czy ma partnera
+-Dependents - czy ma zobowiązania
+-tenure - czas bycia klientem
+-PhoneService - czy wykupuje usługę tel
+-MultipleLines - czy ma multiplelines
+-InternetService - czy wykupuje usługę internetową
+-OnlineSecurity  - czy ma ..
+-OnlineBackup - czy ma ..
+-DeviceProtection - czy ma ..
+-TechSupport - czy ma ..
+-StreamingTV - czy ma ..
+-StreamingMovies - czy ma ..
+-Contract- długość kontraktu
+-PaperlessBilling - czy elektroniczne rachunki
+-PaymentMethod - forma płatności
+-MonthlyCharges - mies. opłaty
+-TotalCharges  -całkowite opłaty zsumowane
+-Churn - czy zrezygnował
+
+
+Moim celem jest pokazać jacy klienci zrezygnowali z usług usługodawcy na podstawie analizy danych z bazy. 
+Przykład z życia: firma straciła te dane i nie wie do kogo wysyłać faktury itd.
+
+
+Zad. 2. Przetwarzanie / obróbka / łączenie / dzielenie baz danych
+1. Sprawdzanie czy wartości w kolumnach są poprawne
+clean.customers <- subset(customers.dirty,
+                          is.finite(customers.dirty$SeniorCitizen) &
+                          is.finite(customers.dirty$tenure) & 
+                          is.finite(customers.dirty$MonthlyCharges) &
+                          is.finite(customers.dirty$TotalCharges) &
+                          customers.dirty$gender %in% c("Male", "Female") &
+                          customers.dirty$Partner %in% c("No", "Yes") & 
+…
+Wynik:
+> nrow(customers.dirty)
+[1] 7043
+> nrow(clean.customers)
+[1] 7032
+
+
+2. Sprawdzanie zależności w tabeli, zastąpienie złych NA i korekcja
+# Reguły
+F <- editset(expression(
+                PhoneService %in% c('Yes','No'),
+                InternetService %in% c("No", "Fiber optic", "DSL"),
+                if ( PhoneService == 'No') MultipleLines=="No phone service",
+…
+Np. jeśli użytkownik nie korzysta z usług telefonicznych to siłą rzeczy nie może być informacji o tym czy korzysta on z MultipleLines. Warunki korekcji przygotowane w pliku ‘edit.txt’.
+
+
+R <- correctionRules("edit.txt")
+correct.customers <- correctWithRules(R, clean.customers)
+corrected.customers <- correct.customers$corrected
+
+
+# Sprawdzanie NA
+check_na <- function() {
+  for (i in 1:21){
+    print(sum(is.na(corrected.customers[i])))
+  }
+}
+check_na()
+Nie wykryto NA, więc nie trzeba uzupełniać danych.
+
+
+3. Klasyfikatory i ich ewaluacja
+        1.  Podział bazy na zbiór treningowy oraz zbiór testowy.
+Najpierw trzeba wyciągnąć z tabeli kolumny numeryczne i złączenie ich w nową tabelę. Potem podział:
+
+
+ccn.training <- cc.numerals[ind==1, 1:4]
+ccn.test <- cc.numerals[ind==2, 1:4]
+
+
+
+
+Zachowanie klasy:
+ccn.trainLabels <- cc.numerals[ind==1, 5]
+ccn.testLabels <- cc.numerals[ind==2, 5]
+2.KNN: 
+k=1, k=3, k=5, k=11, k=25.
+
+
+cc_pred11 <- knn(train = ccn.training, test = ccn.test, cl = ccn.trainLabels, k=11)
+cc_pred25 <- knn(train = ccn.training, test = ccn.test, cl = ccn.trainLabels, k=25)
+Macierz błędu:
+cm_knn11 <- confusionMatrix(cc_pred11, ccn.testLabels)
+Confusion Matrix and Statistics
+
+                         Reference
+Prediction      No      Yes
+            No      1542  382
+           Yes      126    258
+
+
+Accuracy:
+knn11_accuracy <- cm_knn11$overall['Accuracy']
+Accuracy 
+0.779896
+
+
+        3.NaiveBayes
+        nb <- naiveBayes(Churn ~ ., data=cc.numerals)
+                         Reference
+Prediction      No  Yes
+      No            4484  907
+      Yes           679  962
+
+
+
+
+Accuracy 
+0.7744596132
+
+
+4.Drzewa
+ccn_ctree <- ctree(Churn ~., data=cc.numerals)
+                         Reference
+Prediction      No     Yes
+      No            4741 1013
+      Yes           422   856
+
+
+Accuracy 
+0.7959328783
+
+
+
+
+
+
+5.NeuralNet
+#Normalizacja do Sieci neuronowych
+cc.numerals.norm <- cc.numerals
+cc.numerals.norm <- as.data.frame(lapply(cc.numerals[1:4], normalize))
+cc.numerals.norm$yes <- c(cc.numerals$Churn == "Yes")
+cc.numerals.norm$no <- c(cc.numerals$Churn == "No")
+cc.numerals.norm.training <- cc.numerals.norm[ind==1, 1:6]
+cc.numerals.norm.test <- cc.numerals.norm[ind==2, 1:6]
+
+
+cc.nn <- neuralnet(yes + no ~ 
+                     SeniorCitizen + tenure + MonthlyCharges + TotalCharges, data=cc.numerals.norm.training, hidden=3)
+
+
+                           Reference
+Prediction      No      Yes
+        No          1537  360
+        Yes         131    280
+Accuracy 
+0.7872616984
+
+
+
+
+4. TPR FPR oraz WYKRES
+Wzory:
+FPR = FP/N = FP/(FP+TN) = 1 - SPC
+TPR = TP/P = TP/(TP+FN)
+Do obliczenia zastosowałem pogrubione wyżej wzory.
+
+
+Znaczenie:
+TP - klasyfikator dobrze przewidział że dany klient nie zrezygnował z usług (churn=No)
+TN - klasyfikator dobrze przewidział że dany klient zrezygnował z usług (Churn=Yes)
+FP - klasyfikator przewidział “tak”, a w rzeczywistości było “nie”; błąd 1 rodz.
+FN - klasyfikator przewidział “nie”, a w rzeczywistości było “tak”; błąd 2 rodz.
+
+
+W moim przypadku gorszy jest błąd 1 rodzaju, ponieważ przewidział że klient nie zrezygnował z usług, a tak naprawdę było odwrotnie. Np. w przypadku utraty tych danych w prawdziwym życiu jakaś firma zastosowałaby klasyfikatory do ich przewidzenia to zdecydowanie gorszy jest błąd pierwszego rodzaju w tym wypadku.
+
+
+
+
+  
+
+
+
+Najlepiej dla usługodawcy jakby TPR był największy a najmniejszy FPR czyli kropka musiałaby się znajdować w lewym górnym rogu i najbliżej tego znajduje się kropka klasyfikatora C-Tree.
+Najmniej ‘gorszych błędów’ popełnił 25NN i na wykresie znajduje się w lewym dolnym rogu.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+5.Grupowanie metodą k-średnich
+k=5
+  
+
+Widzimy wyraźny
+k=2
+  
+
+Widzimy, że również przy 2 klastrach algorytm podzielił dane na dwie części.
+
+
+6. Reguły asocjacyjne
